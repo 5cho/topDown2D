@@ -5,22 +5,67 @@ public class PlayerController : MonoBehaviour
 {
     [SerializeField] private GameObject swordAttackCollider;
 
-    private Animator animator;
+    public event EventHandler OnAttackActionPerformed;
+
     private Rigidbody2D rb;
     private Vector3 moveDirection;
-    private float moveSpeed = 5f;
-    private bool isFacingRight;
-
-    [SerializeField] private Vector2 swordAttackBoxSize = new Vector2(0.3f, 0.5f);
+    private Vector3 lastMoveDirection;
+    private float moveSpeed = 3f;
+    private float swordAttackOffset = 0.3f;
+    private Vector2 swordAttackBoxSize = new Vector2(0.3f, 0.3f);
+    private int swordAttackDamage = 3;
 
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
     }
 
     private void Update()
+    {
+        HandlePlayerSpriteRotation();
+        HandleSwordAttackColliderPosition();
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            SwordAttack();
+        }
+    }
+    private void FixedUpdate()
+    {
+        rb.velocity = moveDirection * moveSpeed;
+    }
+    private void HandleSwordAttackColliderPosition()
+    {
+        if (lastMoveDirection.x > 0) 
+        {
+            swordAttackCollider.gameObject.transform.localPosition = new Vector3(swordAttackOffset, 0);
+        }
+        else if (lastMoveDirection.x < 0) 
+        {
+            swordAttackCollider.gameObject.transform.localPosition = new Vector3(-swordAttackOffset, 0);
+        }
+        else if (lastMoveDirection.y > 0) 
+        {
+            swordAttackCollider.gameObject.transform.localPosition = new Vector3(0, swordAttackOffset);
+        }
+        else if (lastMoveDirection.y < 0) 
+        {
+            swordAttackCollider.gameObject.transform.localPosition = new Vector3(0, -swordAttackOffset);
+        }
+    }
+    private void HandlePlayerSpriteRotation()
+    {
+        float moveX = GetMovementVectorNomalized().x;
+        if (moveX == 1)
+        {
+            transform.eulerAngles = new Vector3(transform.eulerAngles.x, 0f, transform.eulerAngles.z);
+        }
+        else if (moveX == -1)
+        {
+            transform.eulerAngles = new Vector3(transform.eulerAngles.x, 180f, transform.eulerAngles.z);
+        }
+    }
+    public Vector3 GetMovementVectorNomalized()
     {
         float moveX = 0f;
         float moveY = 0f;
@@ -40,72 +85,35 @@ public class PlayerController : MonoBehaviour
         {
             moveX = 1;
         }
-        
+
         moveDirection = new Vector3(moveX, moveY).normalized;
 
-        if(moveX == 1)
+        if(moveDirection != Vector3.zero)
         {
-            isFacingRight = true;
-        }
-        else if(moveX == -1)
-        {
-            isFacingRight = false;
+            lastMoveDirection = moveDirection;
         }
 
-        if (isFacingRight)
-        {
-            transform.eulerAngles = new Vector3(transform.eulerAngles.x, 0f, transform.eulerAngles.z);
-        }
-        else
-        {
-            transform.eulerAngles = new Vector3(transform.eulerAngles.x, 180f, transform.eulerAngles.z);
-        }
-
-        HandleAnimations();
-
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            SwordAttack();
-        }
-        
+        return moveDirection;
     }
-
-
-    private void FixedUpdate()
+    public bool IsMoving()
     {
-        rb.velocity = moveDirection * moveSpeed;
+        return moveDirection != Vector3.zero;
     }
-    private void HandleAnimations()
-    {
-        if (moveDirection == Vector3.zero)
-        {
-            animator.SetBool("IsMoving", false);
-        }
-        else
-        {
-            animator.SetBool("IsMoving", true);
-        }
-    }
-
     private void SwordAttack()
     {
-        Vector2 swordAttackDirection;
-        if (isFacingRight)
-        {
-            swordAttackDirection = new Vector2(1, 0);
-        }
-        else
-        {
-            swordAttackDirection = new Vector2(-1, 0);
-        }
+        OnAttackActionPerformed?.Invoke(this, EventArgs.Empty);
         RaycastHit2D[] hits = Physics2D.BoxCastAll(swordAttackCollider.transform.position, swordAttackBoxSize, 0f, Vector2.zero);
         for(int i = 0; i < hits.Length; i++)
         {
             if (hits[i].collider.gameObject.GetComponent<Enemy>())
             {
-                Enemy enemyToKill = hits[i].collider.GetComponent<Enemy>();
-                enemyToKill.Die();
+                Enemy EnemyToAttack = hits[i].collider.GetComponent<Enemy>();
+                EnemyToAttack.DealDamageToEnemy(swordAttackDamage);
             }
         }
+    }
+    public Transform GetPlayerTransform()
+    {
+        return transform;
     }
 }
