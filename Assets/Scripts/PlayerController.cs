@@ -11,8 +11,8 @@ public class PlayerController : MonoBehaviour
     private Vector3 moveDirection;
     private Vector3 lastMoveDirection;
     private float moveSpeed = 3f;
-    private float swordAttackOffset = 0.3f;
-    private Vector2 swordAttackBoxSize = new Vector2(0.3f, 0.3f);
+    private float swordAttackOffset = 0.4f;
+    private Vector2 swordAttackBoxSize = new Vector2(0.5f, 0.5f);
     private int swordAttackDamage = 3;
 
 
@@ -33,6 +33,20 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         rb.velocity = moveDirection * moveSpeed;
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.gameObject.TryGetComponent<Chest>(out Chest chest))
+        {
+            chest.SetIsInRange(true);
+        }
+    }
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.TryGetComponent<Chest>(out Chest chest))
+        {
+            chest.SetIsInRange(false);
+        }
     }
     private void HandleSwordAttackColliderPosition()
     {
@@ -116,4 +130,5 @@ public class PlayerController : MonoBehaviour
     {
         return transform;
     }
+    
 }
