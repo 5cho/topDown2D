@@ -5,6 +5,7 @@ using System;
 
 public class PlayerHealth : MonoBehaviour
 {
+    [SerializeField] private CapsuleCollider2D capsuleCollider;
     private int playerHealthMax = 3;
     private int playerHealthCurrent;
 
