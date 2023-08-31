@@ -11,9 +11,13 @@ public class PlayerController : MonoBehaviour
     private Vector3 moveDirection;
     private Vector3 lastMoveDirection;
     private float moveSpeed = 3f;
-    private float swordAttackOffset = 0.4f;
-    private Vector2 swordAttackBoxSize = new Vector2(0.5f, 0.5f);
-    private int swordAttackDamage = 3;
+    private float swordAttackOffset = 0.2f;
+    private float swordAttackRadius = 0.8f;
+    private int swordAttackDamage = 1;
+    [SerializeField] private AudioClip swordAttackAudioClip;
+    private float swordAttackCooldown = 0f;
+    private float swordAttackCooldownMax = 0.5f;
+    private bool canAttack = true;
 
 
     private void Awake()
@@ -23,11 +27,20 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        HandlePlayerSpriteRotation();
+        if (!canAttack)
+        {
+            swordAttackCooldown += Time.deltaTime;
+            if(swordAttackCooldown > swordAttackCooldownMax)
+            {
+                swordAttackCooldown = 0f;
+                canAttack = true;
+            }
+        }
         HandleSwordAttackColliderPosition();
-        if (Input.GetKeyDown(KeyCode.F))
+        if (Input.GetKeyDown(KeyCode.F) && canAttack)
         {
             SwordAttack();
+            canAttack = false;
         }
     }
     private void FixedUpdate()
@@ -67,18 +80,6 @@ public class PlayerController : MonoBehaviour
             swordAttackCollider.gameObject.transform.localPosition = new Vector3(0, -swordAttackOffset);
         }
     }
-    private void HandlePlayerSpriteRotation()
-    {
-        float moveX = GetMovementVectorNomalized().x;
-        if (moveX == 1)
-        {
-            transform.eulerAngles = new Vector3(transform.eulerAngles.x, 0f, transform.eulerAngles.z);
-        }
-        else if (moveX == -1)
-        {
-            transform.eulerAngles = new Vector3(transform.eulerAngles.x, 180f, transform.eulerAngles.z);
-        }
-    }
     public Vector3 GetMovementVectorNomalized()
     {
         float moveX = 0f;
@@ -116,7 +117,8 @@ public class PlayerController : MonoBehaviour
     private void SwordAttack()
     {
         OnAttackActionPerformed?.Invoke(this, EventArgs.Empty);
-        RaycastHit2D[] hits = Physics2D.BoxCastAll(swordAttackCollider.transform.position, swordAttackBoxSize, 0f, Vector2.zero);
+        AudioSource.PlayClipAtPoint(swordAttackAudioClip, transform.position);
+        RaycastHit2D[] hits = Physics2D.CircleCastAll(swordAttackCollider.transform.position, swordAttackRadius, Vector2.zero);
         for(int i = 0; i < hits.Length; i++)
         {
             if (hits[i].collider.gameObject.GetComponent<Enemy>())

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class ProgressBarUI : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class ProgressBarUI : MonoBehaviour
     [SerializeField] private GameObject bar;
     [SerializeField] private Sprite openChestSprite;
     [SerializeField] private SpriteRenderer spriteRenderer;
+    public event EventHandler OnChestOpened;
 
     private void Update()
     {
@@ -23,6 +25,7 @@ public class ProgressBarUI : MonoBehaviour
         {
             fillAmmount = 0;
             isChestOpen = true;
+            OnChestOpened?.Invoke(this, EventArgs.Empty);
             spriteRenderer.sprite = openChestSprite;
         }
         if (isFilling && !isChestOpen)

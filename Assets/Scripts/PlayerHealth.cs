@@ -8,8 +8,14 @@ public class PlayerHealth : MonoBehaviour
     private int playerHealthMax = 3;
     private int playerHealthCurrent;
 
+    private float invulnerableTimer = 0f;
+    private float invulnerableTimerMax = 1f;
+    private bool isInvulnerable = false;
+
     public event EventHandler OnHealthChanged;
     public event EventHandler OnPlayerDied;
+
+    [SerializeField] private AudioClip playerTakeDamageAudioClip;
 
 
     [SerializeField] private GameOverUI GameOverUI;
@@ -17,20 +23,38 @@ public class PlayerHealth : MonoBehaviour
     {
         playerHealthCurrent = playerHealthMax;
     }
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void Update()
     {
-        if (collision.gameObject.TryGetComponent<Enemy>(out Enemy enemy))
+        if (isInvulnerable)
         {
-            int enemyDamageToTake = enemy.GetEnemyDamage();
-            TakeDamage(enemyDamageToTake);
 
-            OnHealthChanged?.Invoke(this, EventArgs.Empty);    
-            if (playerHealthCurrent <= 0)
+            invulnerableTimer += Time.deltaTime;
+            if(invulnerableTimer > invulnerableTimerMax)
             {
-                CallPlayerDiedEvent();
+                invulnerableTimer = 0;
+                isInvulnerable = false;
             }
         }
-        else if(collision.gameObject.TryGetComponent<Bullet>(out Bullet bullet))
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.TryGetComponent<Enemy>(out Enemy enemy) && !isInvulnerable)
+        {
+            int enemyDamageToTake = enemy.GetEnemyDamage();
+            if(enemyDamageToTake != 0)
+            {
+                TakeDamage(enemyDamageToTake);
+                AudioSource.PlayClipAtPoint(playerTakeDamageAudioClip, transform.position);
+                OnHealthChanged?.Invoke(this, EventArgs.Empty);
+                if (playerHealthCurrent <= 0)
+                {
+                    CallPlayerDiedEvent();
+                }
+
+                isInvulnerable = true;
+            }
+        }
+        else if(collision.gameObject.TryGetComponent<Bullet>(out Bullet bullet) && !isInvulnerable)
         {
             int bulletDamageToTake = bullet.GetBulletDamage();
             TakeDamage(bulletDamageToTake);
@@ -41,6 +65,8 @@ public class PlayerHealth : MonoBehaviour
             {
                 CallPlayerDiedEvent();
             }
+
+            isInvulnerable = true;
         }
     }
     private void CallPlayerDiedEvent()

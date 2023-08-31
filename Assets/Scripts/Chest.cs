@@ -6,6 +6,17 @@ public class Chest : MonoBehaviour
 {
     [SerializeField] private ProgressBarUI progressBarUI;
     private bool isInRange;
+    [SerializeField] private AudioClip chestOpenAudioClip;
+    
+    private void Start()
+    {
+        progressBarUI.OnChestOpened += ProgressBarUI_OnChestOpened;
+    }
+
+    private void ProgressBarUI_OnChestOpened(object sender, System.EventArgs e)
+    {
+        AudioSource.PlayClipAtPoint(chestOpenAudioClip, transform.position);
+    }
 
     private void Update()
     {

@@ -7,7 +7,7 @@ public class Bullet : MonoBehaviour
     private float moveSpeed = 2f;
     private float lifetime;
     private float lifetimeMax = 10f;
-    private int bulletDamage = 2;
+    private int bulletDamage = 1;
 
     private void Awake()
     {
